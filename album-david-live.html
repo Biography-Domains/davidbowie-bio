@@ -67,8 +67,8 @@
     <main class="max-w-7xl mx-auto px-4 py-12">
         <div class="grid md:grid-cols-2 gap-12">
             <div>
-                <div class="bg-gray-800 rounded-xl p-8 flex items-center justify-center aspect-square">
-                    <span class="text-9xl">🎵</span>
+                <div class="bg-gray-800 rounded-xl overflow-hidden">
+                    <div class="aspect-square bg-gray-900"><img src="https://upload.wikimedia.org/wikipedia/en/5/5b/David_Live.jpg" alt="David Live album cover" loading="lazy" class="w-full h-full object-cover" onerror="this.onerror=null;this.style.display='none';this.parentElement.innerHTML='<div class=\"aspect-square bg-gray-700 flex items-center justify-center\"><span class=\"text-6xl\">🎵</span></div>';" /></div>
                 </div>
             </div>
             <div>
@@ -131,4 +131,42 @@
             </div>
         </div>
     </footer>
+    <script>
+    (() => {
+      const ytIframes = Array.from(document.querySelectorAll('iframe[src*="youtube.com/embed/"]'));
+      if (!ytIframes.length) return;
+
+      const apiSrc = "https://www.youtube.com/iframe_api";
+      const hasApiScript = Array.from(document.scripts).some(s => (s.src || "").includes(apiSrc));
+
+      const initPlayers = () => {
+        if (!window.YT || !YT.Player) return;
+        const players = [];
+        const onStateChange = (event) => {
+          if (!window.YT || event.data !== YT.PlayerState.PLAYING) return;
+          for (const p of players) {
+            if (p !== event.target) {
+              try { p.pauseVideo(); } catch (_) {}
+            }
+          }
+        };
+        for (const iframe of ytIframes) {
+          try { players.push(new YT.Player(iframe, { events: { onStateChange } })); } catch (_) {}
+        }
+      };
+
+      const prevReady = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        try { if (typeof prevReady === "function") prevReady(); } catch (_) {}
+        initPlayers();
+      };
+
+      if (window.YT && YT.Player) { initPlayers(); return; }
+      if (!hasApiScript) {
+        const tag = document.createElement("script");
+        tag.src = apiSrc;
+        document.head.appendChild(tag);
+      }
+    })();
+    </script>
 </body></html>

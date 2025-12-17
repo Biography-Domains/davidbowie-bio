@@ -70,7 +70,7 @@
                 
         <div class="relative pb-[56.25%] h-0 overflow-hidden rounded-xl mb-6">
             <iframe class="absolute top-0 left-0 w-full h-full"
-                    src="https://www.youtube.com/embed/1hDbpF4Mvaw"
+                    src="https://www.youtube.com/embed/1hDbpF4Mvaw?enablejsapi=1"
                     frameborder="0" allowfullscreen></iframe>
         </div>
     
@@ -132,4 +132,42 @@
             </div>
         </div>
     </footer>
+    <script>
+    (() => {
+      const ytIframes = Array.from(document.querySelectorAll('iframe[src*="youtube.com/embed/"]'));
+      if (!ytIframes.length) return;
+
+      const apiSrc = "https://www.youtube.com/iframe_api";
+      const hasApiScript = Array.from(document.scripts).some(s => (s.src || "").includes(apiSrc));
+
+      const initPlayers = () => {
+        if (!window.YT || !YT.Player) return;
+        const players = [];
+        const onStateChange = (event) => {
+          if (!window.YT || event.data !== YT.PlayerState.PLAYING) return;
+          for (const p of players) {
+            if (p !== event.target) {
+              try { p.pauseVideo(); } catch (_) {}
+            }
+          }
+        };
+        for (const iframe of ytIframes) {
+          try { players.push(new YT.Player(iframe, { events: { onStateChange } })); } catch (_) {}
+        }
+      };
+
+      const prevReady = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        try { if (typeof prevReady === "function") prevReady(); } catch (_) {}
+        initPlayers();
+      };
+
+      if (window.YT && YT.Player) { initPlayers(); return; }
+      if (!hasApiScript) {
+        const tag = document.createElement("script");
+        tag.src = apiSrc;
+        document.head.appendChild(tag);
+      }
+    })();
+    </script>
 </body></html>
